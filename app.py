@@ -1,15 +1,3 @@
-PROJECT BLUEPRINT: SOPALA AI FOR GHANAIAN TEACHERS
-
---- STEP 1: WHAT PACKAGES TO INSTALL ---
-Run this command in the terminal or cloud environment:
-pip install streamlit google-genai PyPDF2
-
---- STEP 2: FOLDER STRUCTURE ---
-Create a main folder named: GhanaTeacherAI
-Inside it, create a sub-folder named: knowledge_base
-(Drop your GES Syllabus PDFs and Dagbani Storybooks into the knowledge_base folder)
-
---- STEP 3: THE CODE (Save as app.py) ---
 import streamlit as st
 import google.generativeai as genai
 import os
