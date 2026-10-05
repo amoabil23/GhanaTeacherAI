@@ -6,7 +6,8 @@ from PyPDF2 import PdfReader
 st.set_page_config(page_title="Sopala AI: Ghanaian Teacher Assistant", page_icon="🇬🇭", layout="centered")
 st.title("🇬🇭 Sopala AI")
 st.subheader("Context-Aware Lesson Planner & Teaching Assistant")
-st.caption("Powered by Gemini 1.5 Flash & Grounded in GES Curriculum Standards")
+st.caption("Powered by Gemini 2.5 Flash & Grounded in GES Curriculum Standards")
+
 
 api_key = st.text_input("Enter your Google AI Studio API Key:", type="password")
 
