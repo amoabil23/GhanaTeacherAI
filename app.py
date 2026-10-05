@@ -46,7 +46,8 @@ if st.button("Generate Resource ✨"):
         st.error("Please enter a topic.")
     else:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
+
         
         prompt = f"""
         You are an expert curriculum designer for the Ghana Education Service (GES) specializing in Basic Education in Northern Ghana.
