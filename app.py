@@ -3,14 +3,17 @@ import google.generativeai as genai
 import os
 from PyPDF2 import PdfReader
 
+# 1. Page Configuration (Makes it look clean on mobile phones and tablets)
 st.set_page_config(page_title="Sopala AI: Ghanaian Teacher Assistant", page_icon="🇬🇭", layout="centered")
+
 st.title("🇬🇭 Sopala AI")
 st.subheader("Context-Aware Lesson Planner & Teaching Assistant")
 st.caption("Powered by Gemini 2.5 Flash & Grounded in GES Curriculum Standards")
 
-
+# 2. Get Google AI Studio API Key securely from the user
 api_key = st.text_input("Enter your Google AI Studio API Key:", type="password")
 
+# 3. Function to read the local GES curriculum files and books
 def load_local_knowledge():
     combined_text = ""
     folder_path = "knowledge_base"
@@ -23,11 +26,13 @@ def load_local_knowledge():
                         combined_text += page.extract_text() + "\n"
                 except Exception as e:
                     pass
-    return combined_text[:30000]
+    return combined_text[:30000] # Limit text parameters initially for performance
 
+# Load the reference files automatically in the background
 with st.spinner("Loading local curriculum guidelines..."):
     local_curriculum_context = load_local_knowledge()
 
+# 4. Teacher Input Form Selection Elements
 st.markdown("### Step 1: Lesson Details")
 col1, col2 = st.columns(2)
 with col1:
@@ -40,24 +45,28 @@ topic = st.text_input("What specific topic are you teaching today?", placeholder
 st.markdown("### Step 2: Custom Instructions")
 output_type = st.radio("What do you want the AI to generate?", ["Complete GES Lesson Plan Outline", "Low-Resource Classroom Activities (Using local materials)", "Dagbani Reading Passage & Vocabulary Drill"])
 
+# 5. Process Request when Action Button is Clicked
 if st.button("Generate Resource ✨"):
     if not api_key:
         st.error("Please enter your Google API Key above to proceed.")
     elif not topic:
         st.error("Please enter a topic.")
     else:
+        # Set up the modern Google Gemini API infrastructure parameters
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.5-flash')
-
         
+        # Build the background prompt template injecting your localized guardrails
         prompt = f"""
         You are an expert curriculum designer for the Ghana Education Service (GES) specializing in Basic Education in Northern Ghana.
-        
+        Your task is to create an educational resource based on the official requirements.
+
         CONSTRAINTS & CONTEXT FOR NORTHERN GHANA:
         - Only suggest classroom experiments and teaching aids that utilize cheap, locally available resources found in Tamale or rural northern schools (e.g., plastic bottles, cardboard, local plants, pebbles, clay). Do not assume access to laboratory equipment or reliable electricity.
         - Ensure pedagogical terms align with the GES standard structures (Rationale, Indicators, Core Competencies, Teacher-Learner Activities).
         
         REFERENCE CURRICULUM DATA:
+        Use the following text extracted from official curriculum guidelines and context books to ground your response:
         {local_curriculum_context}
 
         REQUEST DETAILS:
@@ -65,6 +74,8 @@ if st.button("Generate Resource ✨"):
         Class Level: {class_level}
         Topic: {topic}
         Requested Resource Format: {output_type}
+
+        Please provide a highly structured, accurate response. If translating or creating text in Dagbani, ensure strict adherence to proper grammatical structures.
         """
         
         with st.spinner("Sopala AI is structuring your request..."):
@@ -72,6 +83,9 @@ if st.button("Generate Resource ✨"):
                 response = model.generate_content(prompt)
                 st.markdown("### 📝 Generated Resource")
                 st.write(response.text)
+                
+                # Make it easy for the teacher to copy the text to their notes or MoodleBox deployment
                 st.download_button("Download Text File", response.text, file_name=f"{topic.replace(' ', '_')}_resource.txt")
             except Exception as e:
                 st.error(f"An error occurred: {e}")
+
