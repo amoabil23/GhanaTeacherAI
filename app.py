@@ -54,7 +54,8 @@ if st.button("Generate Resource ✨"):
     else:
         # Set up the modern Google Gemini API infrastructure parameters
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model = genai.GenerativeModel('gemini-3.8-flash')
+ 
         
         # Build the background prompt template injecting your localized guardrails
         prompt = f"""
