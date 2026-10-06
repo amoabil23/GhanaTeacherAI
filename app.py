@@ -68,7 +68,24 @@ with st.spinner("Loading local curriculum guidelines..."):
 st.markdown("### Step 1: Lesson Details")
 col1, col2 = st.columns(2)
 with col1:
-    subject = st.selectbox("Subject", ["Natural Science", "Mathematics", "English Language", "Our World Our People (OWOP)", "Religious & Moral Education (RME)", "Dagbani Literacy"])
+        subject = st.selectbox("Subject", [
+        "Natural Science (Primary)", 
+        "Mathematics (Primary)", 
+        "English Language (Primary)", 
+        "Our World Our People (OWOP)", 
+        "Religious & Moral Education (RME - Primary)", 
+        "Dagbani Literacy (Primary)",
+        "Mathematics (JHS)", 
+        "English Language (JHS)", 
+        "Science (JHS)", 
+        "Social Studies (JHS)", 
+        "Religious and Moral Education (RME - JHS)", 
+        "Ghanaian Language (JHS)", 
+        "Career Technology (JHS)", 
+        "Creative Art and Design (JHS)", 
+        "Computing (JHS)"
+    ])
+
 with col2:
     class_level = st.selectbox("Class Level", ["KG 1", "KG 2", "Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6", "JHS 1", "JHS 2", "JHS 3"])
 
