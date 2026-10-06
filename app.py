@@ -13,7 +13,7 @@ with st.sidebar:
     st.info("Use this tracking checklist to deploy your online resources offline in the classroom.")
     
     st.markdown("### 📋 Classroom Workflow Checklist")
-    st.checkbox("Step 1: Paste API Key & generate resource online.", value=False)
+    st.checkbox("Step 1: Generate resource online.", value=False)
     st.checkbox("Step 2: Click the 'Download Text File' button below.", value=False)
     st.checkbox("Step 3: Connect phone to school 'MoodleBox' Wi-Fi.", value=False)
     st.checkbox("Step 4: Go to http://moodlebox.home completely data-free.", value=False)
