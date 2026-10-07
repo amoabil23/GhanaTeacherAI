@@ -35,6 +35,8 @@ st.caption("Powered by Gemini 3.5 Flash-Lite & Grounded in GES Curriculum Standa
 api_key = st.text_input("Enter your Google AI Studio API Key:", type="password")
 
 # 3. Retrieval-Augmented Generation (RAG) Local PDF Parser
+@st.cache_resource
+
 def load_local_knowledge():
     combined_text = ""
     folder_path = "knowledge_base"
