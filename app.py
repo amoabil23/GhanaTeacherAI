@@ -14,11 +14,10 @@ with st.sidebar:
     st.markdown("## 🍓 MoodleBox Offline Hub")
     st.info("Use this tracking checklist to deploy your online resources offline in the classroom.")
     
-    st.markdown("### 📋 Classroom Workflow Checklist")
-    st.checkbox("Step 1: Paste API Key & generate resource online.", value=False)
+    st.checkbox("Step 1: Paste API Key & choose task.", value=False)
     st.checkbox("Step 2: Click the 'Download Word Document' button below.", value=False)
     st.checkbox("Step 3: Connect phone to school 'MoodleBox' Wi-Fi.", value=False)
-    st.checkbox("Step 4: Go to http://moodlebox.home completely data-free.", value=False)
+    st.checkbox("Step 4: Go to http://moodlebox.home data-free.", value=False)
     st.checkbox("Step 5: Upload the Word file to your Moodle Course block.", value=False)
     
     st.markdown("---")
@@ -26,7 +25,6 @@ with st.sidebar:
     st.caption("Default Admin Username: **admin**")
     st.caption("Default Admin Password: **MoodleBox4$**")
     st.caption("Default Wifi Password: **moodlebox**")
-    
 
 # --- MAIN APP USER INTERFACE ---
 st.title("🇬🇭 Sopala AI")
@@ -66,46 +64,51 @@ def load_local_knowledge():
 with st.spinner("Loading local curriculum guidelines..."):
     local_curriculum_context = load_local_knowledge()
 
-# 4. Interactive Teacher Parameter Inputs Form
-st.markdown("### Step 1: Lesson Details")
-col1, col2 = st.columns(2)
-with col1:
-    subject = st.selectbox("Subject", [
-        "Natural Science (Primary)", 
-        "Mathematics (Primary)", 
-        "English Language (Primary)", 
-        "Our World Our People (OWOP)", 
-        "Religious & Moral Education (RME - Primary)", 
-        "Dagbani Literacy (Primary)",
-        "Mathematics (JHS)", 
-        "English Language (JHS)", 
-        "Science (JHS)", 
-        "Social Studies (JHS)", 
-        "Religious and Moral Education (RME - JHS)", 
-        "Ghanaian Language (JHS)", 
-        "Career Technology (JHS)", 
-        "Creative Art and Design (JHS)", 
-        "Computing (JHS)"
-    ])
-with col2:
-    class_level = st.selectbox("Class Level", ["KG 1", "KG 2", "Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6", "JHS 1", "JHS 2", "JHS 3"])
-
-topic = st.text_input("What specific topic or character are you teaching today?", placeholder="e.g., Sources of Water, or character names like Sana")
-
-st.markdown("### Step 2: Custom Instructions")
-output_type = st.radio("What do you want the AI to generate?", [
+# --- STEP 1: CHOOSE TARGET OUTPUT ---
+st.markdown("### Step 1: What do you want to create today?")
+output_type = st.radio("Select an option:", [
     "Complete GES Lesson Plan Outline", 
     "Low-Resource Classroom Activities (Using local materials)", 
     "Dagbani Reading Passage & Vocabulary Drill",
     "Brand-New Dagbani Story (Based on uploaded storybook characters & vocabulary levels)"
 ])
 
-# Function to safely turn plain AI text into a beautifully styled Word Document (.docx)
+st.markdown("---")
+st.markdown("### Step 2: Resource Parameters")
+
+# --- SMART CONDITIONAL INTERFACE LOGIC ---
+if output_type == "Brand-New Dagbani Story (Based on uploaded storybook characters & vocabulary levels)":
+    # If writing a story, lock the subject to Dagbani and change the topic box into a story prompt builder
+    subject = "Dagbani Literacy (Primary)"
+    st.success("📝 **Story Mode Active:** The app will automatically ground this creation in your uploaded Dagbani children's books.")
+    
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        class_level = st.selectbox("Reading Level / Class", ["KG 1", "KG 2", "Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6"])
+    with col2:
+        topic = st.text_input("Describe your story idea or moral lesson:", placeholder="e.g., A story about Sana helping her mother pick shea nuts near Tamale")
+else:
+    # If building normal lesson plans, show the complete standard curriculum dropdown selections
+    col1, col2 = st.columns(2)
+    with col1:
+        subject = st.selectbox("Subject", [
+            "Natural Science (Primary)", "Mathematics (Primary)", "English Language (Primary)", 
+            "Our World Our People (OWOP)", "Religious & Moral Education (RME - Primary)", "Dagbani Literacy (Primary)",
+            "Mathematics (JHS)", "English Language (JHS)", "Science (JHS)", "Social Studies (JHS)", 
+            "Religious and Moral Education (RME - JHS)", "Ghanaian Language (JHS)", "Career Technology (JHS)", 
+            "Creative Art and Design (JHS)", "Computing (JHS)"
+        ])
+    with col2:
+        class_level = st.selectbox("Class Level", ["KG 1", "KG 2", "Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6", "JHS 1", "JHS 2", "JHS 3"])
+        
+    topic = st.text_input("What specific curriculum topic are you teaching today?", placeholder="e.g., Sources of Water, Photosynthesis, Fractions")
+
+
+# Function to turn markdown text into a beautifully styled Word Document (.docx)
 def convert_to_docx(title_text, content_text):
     doc = Document()
     doc.add_heading(title_text, level=1)
     
-    # Process text line-by-line to preserve layout paragraphs cleanly
     for line in content_text.split('\n'):
         if line.strip().startswith("###"):
             doc.add_heading(line.replace("###", "").strip(), level=3)
@@ -126,7 +129,7 @@ if st.button("Generate Resource ✨"):
     if not api_key:
         st.error("Please enter your Google API Key above to proceed.")
     elif not topic:
-        st.error("Please enter a topic or story prompt.")
+        st.error("Please provide details in the parameter text box.")
     else:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-3.5-flash-lite')
@@ -163,10 +166,8 @@ if st.button("Generate Resource ✨"):
                 st.markdown("### 📝 Generated Resource")
                 st.write(response.text)
                 
-                # Generate the styled Word File binary block instantly in server RAM memory
                 docx_file = convert_to_docx(f"Sopala AI: {topic}", response.text)
                 
-                # Render the bright new Word Document download button interface
                 st.download_button(
                     label="Download Word Document (.docx) 📄",
                     data=docx_file,
@@ -175,6 +176,7 @@ if st.button("Generate Resource ✨"):
                 )
             except Exception as e:
                 st.error(f"An error occurred: {e}")
+
 
 
 
