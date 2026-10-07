@@ -28,7 +28,8 @@ with st.sidebar:
 # --- MAIN APP USER INTERFACE ---
 st.title("🇬🇭 Sopala AI")
 st.subheader("Context-Aware Lesson Planner & Teaching Assistant")
-st.caption("Powered by Gemini 3.8 Flash & Grounded in GES Curriculum Standards")
+st.caption("Powered by Gemini 3.5 Flash-Lite & Grounded in GES Curriculum Standards")
+
 
 # 2. Secure Developer API Key Field
 api_key = st.text_input("Enter your Google AI Studio API Key:", type="password")
@@ -102,7 +103,8 @@ if st.button("Generate Resource ✨"):
         st.error("Please enter a topic.")
     else:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-3.8-flash')
+        model = genai.GenerativeModel('gemini-3.5-flash-lite')
+
         
         prompt = f"""
         You are an expert curriculum designer for the Ghana Education Service (GES) specializing in Basic Education in Northern Ghana.
