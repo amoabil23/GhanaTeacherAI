@@ -2,6 +2,8 @@ import streamlit as st
 import google.generativeai as genai
 import os
 from PyPDF2 import PdfReader
+from docx import Document
+from io import BytesIO
 
 # 1. Page Configuration (Optimized for Mobile/Tablet Screens)
 st.set_page_config(page_title="Sopala AI: Ghanaian Teacher Assistant", page_icon="🇬🇭", layout="centered")
@@ -14,16 +16,17 @@ with st.sidebar:
     
     st.markdown("### 📋 Classroom Workflow Checklist")
     st.checkbox("Step 1: Paste API Key & generate resource online.", value=False)
-    st.checkbox("Step 2: Click the 'Download Text File' button below.", value=False)
+    st.checkbox("Step 2: Click the 'Download Word Document' button below.", value=False)
     st.checkbox("Step 3: Connect phone to school 'MoodleBox' Wi-Fi.", value=False)
     st.checkbox("Step 4: Go to http://moodlebox.home completely data-free.", value=False)
-    st.checkbox("Step 5: Upload the text file to your Moodle Course block.", value=False)
+    st.checkbox("Step 5: Upload the Word file to your Moodle Course block.", value=False)
     
     st.markdown("---")
     st.markdown("### 🛠️ Local Server Access Parameters")
     st.caption("Default Admin Username: **admin**")
     st.caption("Default Admin Password: **MoodleBox4$**")
-    st.caption("Default Wifi Password: **moodlebox**") 
+    st.caption("Default Wifi Password: **moodlebox**")
+    
 
 # --- MAIN APP USER INTERFACE ---
 st.title("🇬🇭 Sopala AI")
@@ -97,6 +100,27 @@ output_type = st.radio("What do you want the AI to generate?", [
     "Brand-New Dagbani Story (Based on uploaded storybook characters & vocabulary levels)"
 ])
 
+# Function to safely turn plain AI text into a beautifully styled Word Document (.docx)
+def convert_to_docx(title_text, content_text):
+    doc = Document()
+    doc.add_heading(title_text, level=1)
+    
+    # Process text line-by-line to preserve layout paragraphs cleanly
+    for line in content_text.split('\n'):
+        if line.strip().startswith("###"):
+            doc.add_heading(line.replace("###", "").strip(), level=3)
+        elif line.strip().startswith("##"):
+            doc.add_heading(line.replace("##", "").strip(), level=2)
+        elif line.strip().startswith("#"):
+            doc.add_heading(line.replace("#", "").strip(), level=1)
+        else:
+            doc.add_paragraph(line)
+            
+    bio = BytesIO()
+    doc.save(bio)
+    bio.seek(0)
+    return bio
+
 # 5. Core Processing & Prompt Engineering Engine
 if st.button("Generate Resource ✨"):
     if not api_key:
@@ -138,9 +162,20 @@ if st.button("Generate Resource ✨"):
                 response = model.generate_content(prompt)
                 st.markdown("### 📝 Generated Resource")
                 st.write(response.text)
-                st.download_button("Download Text File", response.text, file_name=f"{topic.replace(' ', '_')}_resource.txt")
+                
+                # Generate the styled Word File binary block instantly in server RAM memory
+                docx_file = convert_to_docx(f"Sopala AI: {topic}", response.text)
+                
+                # Render the bright new Word Document download button interface
+                st.download_button(
+                    label="Download Word Document (.docx) 📄",
+                    data=docx_file,
+                    file_name=f"{topic.replace(' ', '_')}_resource.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                )
             except Exception as e:
                 st.error(f"An error occurred: {e}")
+
 
 
 
