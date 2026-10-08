@@ -6,11 +6,12 @@ from docx import Document
 from io import BytesIO
 
 # 1. Page Configuration (Optimized for Mobile/Tablet Screens)
-st.set_page_config(page_title="Sopala AI: Ghanaian Teacher Assistant", page_icon="🇬🇭", layout="centered")
+st.set_page_config(page_title="RLS Teacher Hub: Ghanaian Teacher Assistant", page_icon="🇬🇭", layout="centered")
 
 # --- INTEGRATED MOODLEBOX SIDEBAR COMPONENT ---
 with st.sidebar:
-    st.image("https://icons8.com", width=60)
+    # 🎨 Brand Integration: Displays your official Rural Literacy Solutions logo at the top of the sidebar
+    st.image("logo.png", width=160)
     st.markdown("## 🍓 MoodleBox Offline Hub")
     st.info("Use this tracking checklist to deploy your online resources offline in the classroom.")
     
@@ -24,12 +25,13 @@ with st.sidebar:
     st.markdown("### 🛠️ Local Server Access Parameters")
     st.caption("Default Admin Username: **admin**")
     st.caption("Default Admin Password: **MoodleBox4$**")
-    st.caption("Default Wifi Password: **moodlebox**")
+    st.caption("Default Admin Password: **moodlebox**")
+    st.caption("Framework maintained by **Rural Literacy Solutions (RLS)**")
 
 # --- MAIN APP USER INTERFACE ---
-st.title("🇬🇭 Sopala AI")
+st.title("🇬🇭 RLS Teacher Hub")
 st.subheader("Context-Aware Lesson Planner & Teaching Assistant")
-st.caption("Powered by Gemini 3.5 Flash-Lite & Grounded in GES Curriculum Standards")
+st.caption("Powered by RLS Teacher Hub Core Engine & Grounded in GES Curriculum Standards")
 
 # 2. Secure Developer API Key Field
 api_key = st.text_input("Enter your Google AI Studio API Key:", type="password")
@@ -82,7 +84,7 @@ if output_type == "Brand-New Dagbani Story (Based on uploaded storybook characte
     subject = "Dagbani Literacy (Primary)"
     st.success("📝 **Story Mode Active:** The app will automatically ground this creation in your uploaded Dagbani children's books.")
     
-    col1, col2 = st.columns([1, 2])
+    col1, col2 = st.columns(2)
     with col1:
         class_level = st.selectbox("Reading Level / Class", ["KG 1", "KG 2", "Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6"])
     with col2:
@@ -160,13 +162,13 @@ if st.button("Generate Resource ✨"):
         Please deliver a highly professional, practical output. Ensure strict adherence to grammar, cultural logic, and proper spelling parameters.
         """
         
-        with st.spinner("Sopala AI is structuring your request..."):
+        with st.spinner("RLS Teacher Hub is structuring your request..."):
             try:
                 response = model.generate_content(prompt)
                 st.markdown("### 📝 Generated Resource")
                 st.write(response.text)
                 
-                docx_file = convert_to_docx(f"Sopala AI: {topic}", response.text)
+                docx_file = convert_to_docx(f"RLS Teacher Hub: {topic}", response.text)
                 
                 st.download_button(
                     label="Download Word Document (.docx) 📄",
@@ -176,8 +178,3 @@ if st.button("Generate Resource ✨"):
                 )
             except Exception as e:
                 st.error(f"An error occurred: {e}")
-
-
-
-
-
