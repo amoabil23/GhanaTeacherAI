@@ -9,7 +9,7 @@ from docx.oxml.ns import qn, nsdecls
 from io import BytesIO
 
 # 1. Page Configuration (Optimized for Mobile/Tablet Screens)
-st.set_page_config(page_title="RLS Teacher Hub: Ghanaian Teacher Assistant", page_icon="🇬️⃣", layout="centered")
+st.set_page_config(page_title="RLS Teacher Hub: Ghanaian Teacher Assistant", page_icon="🇬🇭", layout="centered")
 
 # --- INTEGRATED MOODLEBOX SIDEBAR COMPONENT ---
 with st.sidebar:
@@ -18,7 +18,7 @@ with st.sidebar:
     st.info("Use this tracking checklist to deploy your online resources offline in the classroom.")
     
     st.checkbox("Step 1: Paste API Key & choose task.", value=False)
-    st.checkbox("Step 2: Choose layout layout style format.", value=False)
+    st.checkbox("Step 2: Choose layout style format.", value=False)
     st.checkbox("Step 3: Click the 'Download Word Document' button below.", value=False)
     st.checkbox("Step 4: Connect phone to school 'MoodleBox' Wi-Fi.", value=False)
     st.checkbox("Step 5: Go to http://moodlebox.home data-free.", value=False)
@@ -140,10 +140,8 @@ def convert_to_docx(title_text, content_text, layout_style, meta_dict=None):
         
         # Apply structured widths across columns
         for row in table_meta.rows:
-            row.cells[0].width = Inches(1.5)
-            row.cells[1].width = Inches(2.0)
-            row.cells[2].width = Inches(1.5)
-            row.cells[3].width = Inches(2.0)
+            for cell in row.cells:
+                cell.width = Inches(1.7)
         
         # Add thin borders to the tables
         tblPr = table_meta._tbl.tblPr
@@ -158,7 +156,7 @@ def convert_to_docx(title_text, content_text, layout_style, meta_dict=None):
         
         # Row 2 entries
         table_meta.cell(1, 0).text = "Duration: 40-60 Mins"
-        table_meta.cell(1, 1).text = "Class Size: [ 40 ]"
+        table_meta.cell(1, 1).text = "Class Size:"
         table_meta.cell(1, 2).text = "Class:"
         table_meta.cell(1, 3).text = meta_dict.get('class_level', '')
         
@@ -180,21 +178,16 @@ def convert_to_docx(title_text, content_text, layout_style, meta_dict=None):
         table_meta.cell(4, 2).text = "Core Competencies:"
         table_meta.cell(4, 3).text = "Personal Dev, Critical Thinking"
 
-        # 🌟 FIXED LOOP BY ADDING RANGE(4)
+        # 🌟 FULLY CORRECTED CELL LOOP LOGIC
         for row in table_meta.rows:
-            for i in range(4):
-                set_cell_background(row.cells[i], "F2F2F2")
+            for cell in row.cells:
+                set_cell_background(cell, "F2F2F2")
 
         doc.add_paragraph("\n") # Line spacing spacer
 
         # 3. Main Delivery Tracking Activities Grid Table Layout
         table_main = doc.add_table(rows=1, cols=3)
         table_main.autofit = False
-        
-        for row in table_main.rows:
-            row.cells[0].width = Inches(1.8)
-            row.cells[1].width = Inches(3.2)
-            row.cells[2].width = Inches(2.0)
         
         # Apply structured table border element tags
         tblPr_m = table_main._tbl.tblPr
@@ -204,4 +197,12 @@ def convert_to_docx(title_text, content_text, layout_style, meta_dict=None):
         hdr_cells[0].text = "Phase / Duration"
         hdr_cells[1].text = "Learner Activities / Core Delivery"
         hdr_cells[2].text = "Resources / TLMs"
+        
+        for cell in hdr_cells:
+            set_cell_background(cell, "E6E6E6")
+            cell.paragraphs[0].runs[0].font.bold = True
 
+        # Sort the processed text content into separate phase categories cleanly
+        phases = {
+            "Phase 1: Starter (10 mins)": [],
+    
