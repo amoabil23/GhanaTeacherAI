@@ -4,8 +4,8 @@ import os
 from PyPDF2 import PdfReader
 from docx import Document
 from docx.shared import Inches, Pt
-from docx.oxml import OxmlElement, parse_xml
-from docx.oxml.ns import qn, nsdecls
+from docx.oxml import parse_xml
+from docx.oxml.ns import nsdecls
 from io import BytesIO
 
 # 1. Page Configuration (Optimized for Mobile/Tablet Screens)
@@ -138,11 +138,6 @@ def convert_to_docx(title_text, content_text, layout_style, meta_dict=None):
         table_meta = doc.add_table(rows=5, cols=4)
         table_meta.autofit = False
         
-        # Apply structured widths across columns
-        for row in table_meta.rows:
-            for cell in row.cells:
-                cell.width = Inches(1.7)
-        
         # Add thin borders to the tables
         tblPr = table_meta._tbl.tblPr
         tblBorders = parse_xml(r'<w:tblBorders %s><w:top w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/><w:left w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/><w:right w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/></w:tblBorders>' % nsdecls('w'))
@@ -178,7 +173,6 @@ def convert_to_docx(title_text, content_text, layout_style, meta_dict=None):
         table_meta.cell(4, 2).text = "Core Competencies:"
         table_meta.cell(4, 3).text = "Personal Dev, Critical Thinking"
 
-        # 🌟 FULLY CORRECTED CELL LOOP LOGIC
         for row in table_meta.rows:
             for cell in row.cells:
                 set_cell_background(cell, "F2F2F2")
@@ -202,7 +196,13 @@ def convert_to_docx(title_text, content_text, layout_style, meta_dict=None):
             set_cell_background(cell, "E6E6E6")
             cell.paragraphs[0].runs[0].font.bold = True
 
-        # Sort the processed text content into separate phase categories cleanly
+        # 🌟 DICTIONARY BRACES FULLY EXPLICITLY CLOSED
         phases = {
             "Phase 1: Starter (10 mins)": [],
+            "Phase 2: Main (Other Activities)": [],
+            "Phase 3: Plenary / Reflections": []
+        }
+        
+        current_phase = "Phase 2: Main (Other Activities)"
+        for line in content_text.split('\n'):
     
