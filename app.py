@@ -3,9 +3,6 @@ import google.generativeai as genai
 import os
 from PyPDF2 import PdfReader
 from docx import Document
-from docx.shared import Inches, Pt
-from docx.oxml import parse_xml
-from docx.oxml.ns import nsdecls
 from io import BytesIO
 
 # 1. Page Configuration (Optimized for Mobile/Tablet Screens)
@@ -110,99 +107,84 @@ else:
     layout_style = st.radio("Choose layout template style:", ["Standard Text Block Layout", "Official NaCCA Standard Table Template Grid"])
 
 
-# Helper function to inject light grey header cell backgrounds to match NaCCA layout styles
-def set_cell_background(cell, color_hex):
-    shading_elm = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{color_hex}"/>')
-    cell._tc.get_or_add_tcPr().append(shading_elm)
-
-# Function to safely turn plain AI text into a beautifully styled Word Document (.docx)
-def convert_to_docx(title_text, content_text, layout_style, meta_dict=None):
+# Clean, error-proof function to safely generate standard Word files
+def convert_to_docx(title_text, content_text):
     doc = Document()
+    doc.add_heading(title_text, level=1)
     
-    # Configure 1-inch uniform margins
-    for section in doc.sections:
-        section.top_margin = Inches(1)
-        section.bottom_margin = Inches(1)
-        section.left_margin = Inches(1)
-        section.right_margin = Inches(1)
+    for line in content_text.split('\n'):
+        if line.strip().startswith("###"):
+            doc.add_heading(line.replace("###", "").strip(), level=3)
+        elif line.strip().startswith("##"):
+            doc.add_heading(line.replace("##", "").strip(), level=2)
+        elif line.strip().startswith("#"):
+            doc.add_heading(line.replace("#", "").strip(), level=1)
+        else:
+            doc.add_paragraph(line)
+            
+    bio = BytesIO()
+    doc.save(bio)
+    bio.seek(0)
+    return bio
 
-    if layout_style == "Official NaCCA Standard Table Template Grid" and meta_dict:
-        # 1. Page Header Block
-        p_head = doc.add_paragraph()
-        r_head = p_head.add_run("NATIONAL COUNCIL FOR CURRICULUM & ASSESSMENT (NaCCA)\nDAILY LESSON TRACKING MATRIX")
-        r_head.bold = True
-        r_head.font.size = Pt(12)
-        p_head.alignment = 1 # Centered
+# 5. Core Processing & Prompt Engineering Engine
+if st.button("Generate Resource ✨"):
+    if not api_key:
+        st.error("Please enter your Google API Key above to proceed.")
+    elif not topic:
+        st.error("Please provide details in the parameter text box.")
+    else:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-3.5-flash-lite')
         
-        # 2. Section A Metadata Block Grid Table
-        table_meta = doc.add_table(rows=5, cols=4)
-        table_meta.autofit = False
-        
-        # Add thin borders to the tables
-        tblPr = table_meta._tbl.tblPr
-        tblBorders = parse_xml(r'<w:tblBorders %s><w:top w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/><w:left w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/><w:right w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/></w:tblBorders>' % nsdecls('w'))
-        tblPr.append(tblBorders)
+        if layout_style == "Official NaCCA Standard Table Template Grid":
+            layout_instruction = """Format the entire lesson plan output as a clean text-based table matrix using markdown borders. Use columns for 'Phase / Duration', 'Learner Activities', and 'Resources / TLMs'. Make sure to include row sections for Phase 1: Starter, Phase 2: Main, and Phase 3: Plenary matching official NaCCA guidelines."""
+        else:
+            layout_instruction = "Render standard markdown headings and paragraph lists to structure the output content."
 
-        # Row 1 entries
-        table_meta.cell(0, 0).text = "Date: [ As Planned ]"
-        table_meta.cell(0, 1).text = "Period: [ 1 & 2 ]"
-        table_meta.cell(0, 2).text = "Subject:"
-        table_meta.cell(0, 3).text = meta_dict.get('subject', '')
-        
-        # Row 2 entries
-        table_meta.cell(1, 0).text = "Duration: 40-60 Mins"
-        table_meta.cell(1, 1).text = "Class Size:"
-        table_meta.cell(1, 2).text = "Class:"
-        table_meta.cell(1, 3).text = meta_dict.get('class_level', '')
-        
-        # Row 3 entries
-        table_meta.cell(2, 0).text = "Strand:"
-        table_meta.cell(2, 1).text = f"As defined in curriculum."
-        table_meta.cell(2, 2).text = "Sub-Strand:"
-        table_meta.cell(2, 3).text = meta_dict.get('topic', '')
-        
-        # Row 4 entries
-        table_meta.cell(3, 0).text = "Content Standard:"
-        table_meta.cell(3, 1).text = "Grounded via RLS Core Specifications."
-        table_meta.cell(3, 2).text = "Indicator:"
-        table_meta.cell(3, 3).text = f"Lesson 1 of 1"
-        
-        # Row 5 entries
-        table_meta.cell(4, 0).text = "Key Words:"
-        table_meta.cell(4, 1).text = "Included below."
-        table_meta.cell(4, 2).text = "Core Competencies:"
-        table_meta.cell(4, 3).text = "Personal Dev, Critical Thinking"
+        prompt = f"""
+        You are an expert curriculum designer for the Ghana Education Service (GES), NaCCA standards tracking boards, and a master storyteller specializing in Dagbani literacy for Basic Education in Northern Ghana.
+        Your task is to create a highly accurate, structured educational resource based on the parameters requested.
 
-        for row in table_meta.rows:
-            for cell in row.cells:
-                set_cell_background(cell, "F2F2F2")
+        LAYOUT RULE REQUIREMENTS:
+        {layout_instruction}
 
-        doc.add_paragraph("\n") # Line spacing spacer
+        CONSTRAINTS & LOCALIZED NORTHERN GHANA CONTEXT:
+        - Only suggest classroom experiments, teaching aids, and learning materials that utilize cheap, locally available resources found in Tamale or surrounding rural northern schools (e.g., empty plastic bottles, cardboard scrap, local plants, pebbles, local clay). Do not assume access to standard laboratory equipment, commercial kits, or reliable grid electricity.
+        - Ensure all pedagogical structures and headings align exactly with the standard GES template (Rationale, Indicators, Core Competencies, Phase 1: Starter/Warm-up, Phase 2: Main Activity/Teacher-Learner Activities, Phase 3: Plenary/Reflection).
+        
+        STRICT DAGBANI STORY GENERATION GUARDRAILS (If requested):
+        - If generating a story, strictly use the traditional Northern Ghana setting, culture, and context. Use local naming conventions (e.g., Sana, Iddi, Napari, Amina).
+        - Extrapolate characters, style, syntax, and tone directly from the reference storybooks inside the grounding data. Match the vocabulary level to the selected class level (KG vs Primary vs JHS).
+        - Ensure absolute linguistic authenticity and adherence to the official Dagbani Orthography. Correctly use specific characters like 'ŋ', 'ɣ', 'ɛ', and 'ɔ'.
+        
+        REFERENCE CURRICULUM & STORYBOOK GROUNDING DATA:
+        Use the following text extracted from official curriculum guidelines and uploaded Dagbani books to ground your generation:
+        {local_curriculum_context}
 
-        # 3. Main Delivery Tracking Activities Grid Table Layout
-        table_main = doc.add_table(rows=1, cols=3)
-        table_main.autofit = False
-        
-        # Apply structured table border element tags
-        tblPr_m = table_main._tbl.tblPr
-        tblPr_m.append(parse_xml(r'<w:tblBorders %s><w:top w:val="single" w:sz="6" w:space="0" w:color="000000"/><w:bottom w:val="single" w:sz="6" w:space="0" w:color="000000"/><w:left w:val="single" w:sz="6" w:space="0" w:color="000000"/><w:right w:val="single" w:sz="6" w:space="0" w:color="000000"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/><w:insideV w:val="single" w:sz="6" w:space="0" w:color="000000"/></w:tblBorders>' % nsdecls('w')))
-        
-        hdr_cells = table_main.rows[0].cells
-        hdr_cells[0].text = "Phase / Duration"
-        hdr_cells[1].text = "Learner Activities / Core Delivery"
-        hdr_cells[2].text = "Resources / TLMs"
-        
-        for cell in hdr_cells:
-            set_cell_background(cell, "E6E6E6")
-            cell.paragraphs[0].runs[0].font.bold = True
+        REQUEST PARAMETERS:
+        Subject: {subject}
+        Class Level: {class_level}
+        Topic/Prompt: {topic}
+        Requested Resource Format: {output_type}
 
-        # 🌟 DICTIONARY BRACES FULLY EXPLICITLY CLOSED
-        phases = {
-            "Phase 1: Starter (10 mins)": [],
-            "Phase 2: Main (Other Activities)": [],
-            "Phase 3: Plenary / Reflections": []
-        }
+        Please deliver a highly professional, practical output. Ensure strict adherence to grammar, cultural logic, and proper spelling parameters.
+        """
         
-        current_phase = "Phase 2: Main (Other Activities)"
-        for line in content_text.split('\n'):
-    
+        with st.spinner("RLS Teacher Hub is structuring your request..."):
+            try:
+                response = model.generate_content(prompt)
+                st.markdown("### 📝 Generated Resource Preview")
+                st.write(response.text)
+                
+                docx_file = convert_to_docx(f"RLS Teacher Hub: {topic}", response.text)
+                
+                st.download_button(
+                    label="Download Word Document (.docx) 📄",
+                    data=docx_file,
+                    file_name=f"{topic.replace(' ', '_')}_resource.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                )
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
+                        
