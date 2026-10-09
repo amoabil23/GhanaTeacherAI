@@ -27,7 +27,8 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 🛠️ Local Server Access Parameters")
     st.caption("Default Admin Username: **admin**")
-    st.caption("Default Admin Password: **MoodleBox2018!**")
+    st.caption("Default Admin Password: **MoodleBox4$**")
+    st.caption("Default Admin Password: **moodlebox**")
     st.caption("Framework maintained by **Rural Literacy Solutions (RLS)**")
 
 # --- MAIN APP USER INTERFACE ---
