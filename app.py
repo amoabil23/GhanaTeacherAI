@@ -9,7 +9,7 @@ from docx.oxml.ns import qn, nsdecls
 from io import BytesIO
 
 # 1. Page Configuration (Optimized for Mobile/Tablet Screens)
-st.set_page_config(page_title="RLS Teacher Hub: Ghanaian Teacher Assistant", page_icon="🇬🇭", layout="centered")
+st.set_page_config(page_title="RLS Teacher Hub: Ghanaian Teacher Assistant", page_icon="🇬️⃣", layout="centered")
 
 # --- INTEGRATED MOODLEBOX SIDEBAR COMPONENT ---
 with st.sidebar:
@@ -28,7 +28,6 @@ with st.sidebar:
     st.markdown("### 🛠️ Local Server Access Parameters")
     st.caption("Default Admin Username: **admin**")
     st.caption("Default Admin Password: **MoodleBox4$**")
-    st.caption("Default Admin Password: **moodlebox**")
     st.caption("Framework maintained by **Rural Literacy Solutions (RLS)**")
 
 # --- MAIN APP USER INTERFACE ---
@@ -107,7 +106,6 @@ else:
         
     topic = st.text_input("What specific curriculum topic are you teaching today?", placeholder="e.g., Sources of Water, Photosynthesis, Fractions")
     
-    # 🌟 NEW DOCUMENT TEMPLATE SELECTOR RADIO BUTTONS
     st.markdown("### Step 3: Select Document Layout Format")
     layout_style = st.radio("Choose layout template style:", ["Standard Text Block Layout", "Official NaCCA Standard Table Template Grid"])
 
@@ -139,10 +137,13 @@ def convert_to_docx(title_text, content_text, layout_style, meta_dict=None):
         # 2. Section A Metadata Block Grid Table
         table_meta = doc.add_table(rows=5, cols=4)
         table_meta.autofit = False
-        table_meta.columns[0].width = Inches(1.8)
-        table_meta.columns[1].width = Inches(1.7)
-        table_meta.columns[2].width = Inches(1.5)
-        table_meta.columns[3].width = Inches(1.5)
+        
+        # Apply structured widths across columns
+        for row in table_meta.rows:
+            row.cells[0].width = Inches(1.5)
+            row.cells[1].width = Inches(2.0)
+            row.cells[2].width = Inches(1.5)
+            row.cells[3].width = Inches(2.0)
         
         # Add thin borders to the tables
         tblPr = table_meta._tbl.tblPr
@@ -163,11 +164,9 @@ def convert_to_docx(title_text, content_text, layout_style, meta_dict=None):
         
         # Row 3 entries
         table_meta.cell(2, 0).text = "Strand:"
-        cell_strand = table_meta.cell(2, 1)
-        cell_strand.text = f"As defined in {meta_dict.get('subject', '')} syllabus framework."
+        table_meta.cell(2, 1).text = f"As defined in curriculum."
         table_meta.cell(2, 2).text = "Sub-Strand:"
         table_meta.cell(2, 3).text = meta_dict.get('topic', '')
-        # Merge cell 1 across columns if necessary or leave structured
         
         # Row 4 entries
         table_meta.cell(3, 0).text = "Content Standard:"
@@ -181,8 +180,9 @@ def convert_to_docx(title_text, content_text, layout_style, meta_dict=None):
         table_meta.cell(4, 2).text = "Core Competencies:"
         table_meta.cell(4, 3).text = "Personal Dev, Critical Thinking"
 
+        # 🌟 FIXED LOOP BY ADDING RANGE(4)
         for row in table_meta.rows:
-            for i in:
+            for i in range(4):
                 set_cell_background(row.cells[i], "F2F2F2")
 
         doc.add_paragraph("\n") # Line spacing spacer
@@ -190,9 +190,11 @@ def convert_to_docx(title_text, content_text, layout_style, meta_dict=None):
         # 3. Main Delivery Tracking Activities Grid Table Layout
         table_main = doc.add_table(rows=1, cols=3)
         table_main.autofit = False
-        table_main.columns[0].width = Inches(1.8)
-        table_main.columns[1].width = Inches(3.2)
-        table_main.columns[2].width = Inches(1.5)
+        
+        for row in table_main.rows:
+            row.cells[0].width = Inches(1.8)
+            row.cells[1].width = Inches(3.2)
+            row.cells[2].width = Inches(2.0)
         
         # Apply structured table border element tags
         tblPr_m = table_main._tbl.tblPr
@@ -201,3 +203,5 @@ def convert_to_docx(title_text, content_text, layout_style, meta_dict=None):
         hdr_cells = table_main.rows[0].cells
         hdr_cells[0].text = "Phase / Duration"
         hdr_cells[1].text = "Learner Activities / Core Delivery"
+        hdr_cells[2].text = "Resources / TLMs"
+
