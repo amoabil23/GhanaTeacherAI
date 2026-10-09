@@ -3,6 +3,9 @@ import google.generativeai as genai
 import os
 from PyPDF2 import PdfReader
 from docx import Document
+from docx.shared import Inches, Pt
+from docx.oxml import OxmlElement, parse_xml
+from docx.oxml.ns import qn, nsdecls
 from io import BytesIO
 
 # 1. Page Configuration (Optimized for Mobile/Tablet Screens)
@@ -10,22 +13,21 @@ st.set_page_config(page_title="RLS Teacher Hub: Ghanaian Teacher Assistant", pag
 
 # --- INTEGRATED MOODLEBOX SIDEBAR COMPONENT ---
 with st.sidebar:
-    # 🎨 Brand Integration: Displays your official Rural Literacy Solutions logo at the top of the sidebar
     st.image("logo.png", width=160)
     st.markdown("## 🍓 MoodleBox Offline Hub")
     st.info("Use this tracking checklist to deploy your online resources offline in the classroom.")
     
     st.checkbox("Step 1: Paste API Key & choose task.", value=False)
-    st.checkbox("Step 2: Click the 'Download Word Document' button below.", value=False)
-    st.checkbox("Step 3: Connect phone to school 'MoodleBox' Wi-Fi.", value=False)
-    st.checkbox("Step 4: Go to http://moodlebox.home data-free.", value=False)
-    st.checkbox("Step 5: Upload the Word file to your Moodle Course block.", value=False)
+    st.checkbox("Step 2: Choose layout layout style format.", value=False)
+    st.checkbox("Step 3: Click the 'Download Word Document' button below.", value=False)
+    st.checkbox("Step 4: Connect phone to school 'MoodleBox' Wi-Fi.", value=False)
+    st.checkbox("Step 5: Go to http://moodlebox.home data-free.", value=False)
+    st.checkbox("Step 6: Upload the Word file to your Moodle Course block.", value=False)
     
     st.markdown("---")
     st.markdown("### 🛠️ Local Server Access Parameters")
     st.caption("Default Admin Username: **admin**")
-    st.caption("Default Admin Password: **MoodleBox4$**")
-    st.caption("Default Admin Password: **moodlebox**")
+    st.caption("Default Admin Password: **MoodleBox2018!**")
     st.caption("Framework maintained by **Rural Literacy Solutions (RLS)**")
 
 # --- MAIN APP USER INTERFACE ---
@@ -80,7 +82,6 @@ st.markdown("### Step 2: Resource Parameters")
 
 # --- SMART CONDITIONAL INTERFACE LOGIC ---
 if output_type == "Brand-New Dagbani Story (Based on uploaded storybook characters & vocabulary levels)":
-    # If writing a story, lock the subject to Dagbani and change the topic box into a story prompt builder
     subject = "Dagbani Literacy (Primary)"
     st.success("📝 **Story Mode Active:** The app will automatically ground this creation in your uploaded Dagbani children's books.")
     
@@ -89,8 +90,8 @@ if output_type == "Brand-New Dagbani Story (Based on uploaded storybook characte
         class_level = st.selectbox("Reading Level / Class", ["KG 1", "KG 2", "Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6"])
     with col2:
         topic = st.text_input("Describe your story idea or moral lesson:", placeholder="e.g., A story about Sana helping her mother pick shea nuts near Tamale")
+    layout_style = "Standard Text Block Layout"
 else:
-    # If building normal lesson plans, show the complete standard curriculum dropdown selections
     col1, col2 = st.columns(2)
     with col1:
         subject = st.selectbox("Subject", [
@@ -104,77 +105,98 @@ else:
         class_level = st.selectbox("Class Level", ["KG 1", "KG 2", "Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6", "JHS 1", "JHS 2", "JHS 3"])
         
     topic = st.text_input("What specific curriculum topic are you teaching today?", placeholder="e.g., Sources of Water, Photosynthesis, Fractions")
-
-
-# Function to turn markdown text into a beautifully styled Word Document (.docx)
-def convert_to_docx(title_text, content_text):
-    doc = Document()
-    doc.add_heading(title_text, level=1)
     
-    for line in content_text.split('\n'):
-        if line.strip().startswith("###"):
-            doc.add_heading(line.replace("###", "").strip(), level=3)
-        elif line.strip().startswith("##"):
-            doc.add_heading(line.replace("##", "").strip(), level=2)
-        elif line.strip().startswith("#"):
-            doc.add_heading(line.replace("#", "").strip(), level=1)
-        else:
-            doc.add_paragraph(line)
-            
-    bio = BytesIO()
-    doc.save(bio)
-    bio.seek(0)
-    return bio
+    # 🌟 NEW DOCUMENT TEMPLATE SELECTOR RADIO BUTTONS
+    st.markdown("### Step 3: Select Document Layout Format")
+    layout_style = st.radio("Choose layout template style:", ["Standard Text Block Layout", "Official NaCCA Standard Table Template Grid"])
 
-# 5. Core Processing & Prompt Engineering Engine
-if st.button("Generate Resource ✨"):
-    if not api_key:
-        st.error("Please enter your Google API Key above to proceed.")
-    elif not topic:
-        st.error("Please provide details in the parameter text box.")
-    else:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-3.5-flash-lite')
-        
-        prompt = f"""
-        You are an expert curriculum designer for the Ghana Education Service (GES) and a master storyteller specializing in Dagbani literacy for Basic Education in Northern Ghana.
-        Your task is to create a highly accurate, structured educational resource based on the parameters requested.
 
-        CONSTRAINTS & LOCALIZED NORTHERN GHANA CONTEXT:
-        - Only suggest classroom experiments, teaching aids, and learning materials that utilize cheap, locally available resources found in Tamale or surrounding rural northern schools (e.g., empty plastic bottles, cardboard scrap, local plants, pebbles, local clay). Do not assume access to standard laboratory equipment, commercial kits, or reliable grid electricity.
-        - Ensure all pedagogical structures and headings align exactly with the standard GES template (Rationale, Indicators, Core Competencies, Phase 1: Starter/Warm-up, Phase 2: Main Activity/Teacher-Learner Activities, Phase 3: Plenary/Reflection).
-        
-        STRICT DAGBANI STORY GENERATION GUARDRAILS (If requested):
-        - If generating a story, strictly use the traditional Northern Ghana setting, culture, and context. Use local naming conventions (e.g., Sana, Iddi, Napari, Amina).
-        - Extrapolate characters, style, syntax, and tone directly from the reference storybooks inside the grounding data. Match the vocabulary level to the selected class level (KG vs Primary vs JHS).
-        - Ensure absolute linguistic authenticity and adherence to the official Dagbani Orthography. Correctly use specific characters like 'ŋ', 'ɣ', 'ɛ', and 'ɔ'.
-        
-        REFERENCE CURRICULUM & STORYBOOK GROUNDING DATA:
-        Use the following text extracted from official curriculum guidelines and uploaded Dagbani books to ground your generation:
-        {local_curriculum_context}
+# Helper function to inject light grey header cell backgrounds to match NaCCA layout styles
+def set_cell_background(cell, color_hex):
+    shading_elm = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{color_hex}"/>')
+    cell._tc.get_or_add_tcPr().append(shading_elm)
 
-        REQUEST PARAMETERS:
-        Subject: {subject}
-        Class Level: {class_level}
-        Topic/Prompt: {topic}
-        Requested Resource Format: {output_type}
+# Function to safely turn plain AI text into a beautifully styled Word Document (.docx)
+def convert_to_docx(title_text, content_text, layout_style, meta_dict=None):
+    doc = Document()
+    
+    # Configure 1-inch uniform margins
+    for section in doc.sections:
+        section.top_margin = Inches(1)
+        section.bottom_margin = Inches(1)
+        section.left_margin = Inches(1)
+        section.right_margin = Inches(1)
 
-        Please deliver a highly professional, practical output. Ensure strict adherence to grammar, cultural logic, and proper spelling parameters.
-        """
+    if layout_style == "Official NaCCA Standard Table Template Grid" and meta_dict:
+        # 1. Page Header Block
+        p_head = doc.add_paragraph()
+        r_head = p_head.add_run("NATIONAL COUNCIL FOR CURRICULUM & ASSESSMENT (NaCCA)\nDAILY LESSON TRACKING MATRIX")
+        r_head.bold = True
+        r_head.font.size = Pt(12)
+        p_head.alignment = 1 # Centered
         
-        with st.spinner("RLS Teacher Hub is structuring your request..."):
-            try:
-                response = model.generate_content(prompt)
-                st.markdown("### 📝 Generated Resource")
-                st.write(response.text)
-                
-                docx_file = convert_to_docx(f"RLS Teacher Hub: {topic}", response.text)
-                
-                st.download_button(
-                    label="Download Word Document (.docx) 📄",
-                    data=docx_file,
-                    file_name=f"{topic.replace(' ', '_')}_resource.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                )
-            except Exception as e:
-                st.error(f"An error occurred: {e}")
+        # 2. Section A Metadata Block Grid Table
+        table_meta = doc.add_table(rows=5, cols=4)
+        table_meta.autofit = False
+        table_meta.columns[0].width = Inches(1.8)
+        table_meta.columns[1].width = Inches(1.7)
+        table_meta.columns[2].width = Inches(1.5)
+        table_meta.columns[3].width = Inches(1.5)
+        
+        # Add thin borders to the tables
+        tblPr = table_meta._tbl.tblPr
+        tblBorders = parse_xml(r'<w:tblBorders %s><w:top w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/><w:left w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/><w:right w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/></w:tblBorders>' % nsdecls('w'))
+        tblPr.append(tblBorders)
+
+        # Row 1 entries
+        table_meta.cell(0, 0).text = "Date: [ As Planned ]"
+        table_meta.cell(0, 1).text = "Period: [ 1 & 2 ]"
+        table_meta.cell(0, 2).text = "Subject:"
+        table_meta.cell(0, 3).text = meta_dict.get('subject', '')
+        
+        # Row 2 entries
+        table_meta.cell(1, 0).text = "Duration: 40-60 Mins"
+        table_meta.cell(1, 1).text = "Class Size: [ 40 ]"
+        table_meta.cell(1, 2).text = "Class:"
+        table_meta.cell(1, 3).text = meta_dict.get('class_level', '')
+        
+        # Row 3 entries
+        table_meta.cell(2, 0).text = "Strand:"
+        cell_strand = table_meta.cell(2, 1)
+        cell_strand.text = f"As defined in {meta_dict.get('subject', '')} syllabus framework."
+        table_meta.cell(2, 2).text = "Sub-Strand:"
+        table_meta.cell(2, 3).text = meta_dict.get('topic', '')
+        # Merge cell 1 across columns if necessary or leave structured
+        
+        # Row 4 entries
+        table_meta.cell(3, 0).text = "Content Standard:"
+        table_meta.cell(3, 1).text = "Grounded via RLS Core Specifications."
+        table_meta.cell(3, 2).text = "Indicator:"
+        table_meta.cell(3, 3).text = f"Lesson 1 of 1"
+        
+        # Row 5 entries
+        table_meta.cell(4, 0).text = "Key Words:"
+        table_meta.cell(4, 1).text = "Included below."
+        table_meta.cell(4, 2).text = "Core Competencies:"
+        table_meta.cell(4, 3).text = "Personal Dev, Critical Thinking"
+
+        for row in table_meta.rows:
+            for i in:
+                set_cell_background(row.cells[i], "F2F2F2")
+
+        doc.add_paragraph("\n") # Line spacing spacer
+
+        # 3. Main Delivery Tracking Activities Grid Table Layout
+        table_main = doc.add_table(rows=1, cols=3)
+        table_main.autofit = False
+        table_main.columns[0].width = Inches(1.8)
+        table_main.columns[1].width = Inches(3.2)
+        table_main.columns[2].width = Inches(1.5)
+        
+        # Apply structured table border element tags
+        tblPr_m = table_main._tbl.tblPr
+        tblPr_m.append(parse_xml(r'<w:tblBorders %s><w:top w:val="single" w:sz="6" w:space="0" w:color="000000"/><w:bottom w:val="single" w:sz="6" w:space="0" w:color="000000"/><w:left w:val="single" w:sz="6" w:space="0" w:color="000000"/><w:right w:val="single" w:sz="6" w:space="0" w:color="000000"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/><w:insideV w:val="single" w:sz="6" w:space="0" w:color="000000"/></w:tblBorders>' % nsdecls('w')))
+        
+        hdr_cells = table_main.rows[0].cells
+        hdr_cells[0].text = "Phase / Duration"
+        hdr_cells[1].text = "Learner Activities / Core Delivery"
