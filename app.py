@@ -60,7 +60,7 @@ def load_local_knowledge():
             except Exception as e:
                 pass
                 
-    return combined_text[:30000]
+    return combined_text[:200000]
 
 with st.spinner("Loading local curriculum guidelines..."):
     local_curriculum_context = load_local_knowledge()
