@@ -93,7 +93,7 @@ else:
     with col1:
         subject = st.selectbox("Subject", [
             "Natural Science (Primary)", "Mathematics (Primary)", "English Language (Primary)", "History (Primary)",
-            "Our World Our People (OWOP)", "Religious & Moral Education (RME - Primary)", "Dagbani Literacy (Primary)",
+            "Our World Our People (OWOP)", "Religious & Moral Education (RME - Primary)", "Dagbani Literacy (Primary)","Ghanaian Language (Primary)",
             "Mathematics (JHS)", "English Language (JHS)", "Science (JHS)", "Social Studies (JHS)", 
             "Religious and Moral Education (RME - JHS)", "Ghanaian Language (JHS)", "Career Technology (JHS)", 
             "Creative Art and Design (JHS)", "Computing (JHS)"
